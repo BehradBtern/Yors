@@ -1,0 +1,112 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String     @id @default(cuid())
+  email      String     @unique
+  name       String
+  password   String
+  role       String     @default("user") // user, premium, owner
+  isPremium  Boolean    @default(false)
+  premiumSince DateTime?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  questions  Question[]
+  votes      Vote[]
+  comments   Comment[]
+  sessions   Session[]
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token      String
+  expiresAt  DateTime
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Question {
+  id           String     @id @default(cuid())
+  text         String
+  questionType String     @default("yesNo") // yesNo, multiple
+  yesLabel     String     @default("Yes")
+  noLabel      String     @default("No")
+  yesCount     Int        @default(0)
+  noCount      Int        @default(0)
+  status       String     @default("active") // draft, scheduled, active, ended
+  category     String     @default("other")
+  startDate    DateTime?
+  endDate      DateTime?
+  authorId     String
+  author       User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  votes        Vote[]
+  options      Option[]
+  comments     Comment[]
+}
+
+model Option {
+  id          String    @id @default(cuid())
+  text        String
+  color       String    @default("#09637E")
+  voteCount   Int       @default(0)
+  order       Int       @default(0)
+  questionId  String
+  question    Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  votes       Vote[]
+  createdAt   DateTime  @default(now())
+
+  @@index([questionId])
+}
+
+model Vote {
+  id          String    @id @default(cuid())
+  questionId  String
+  question    Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  voterId     String
+  voter       User      @relation(fields: [voterId], references: [id], onDelete: Cascade)
+  answer      Boolean?
+  optionId    String?
+  option      Option?   @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@unique([questionId, voterId])
+  @@index([questionId])
+  @@index([optionId])
+}
+
+model Comment {
+  id          String    @id @default(cuid())
+  text        String
+  questionId  String
+  question    Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  authorId    String
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([questionId])
+}
+
+model SiteSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
