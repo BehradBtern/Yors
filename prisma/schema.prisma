@@ -6,8 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = "postgresql://neondb_owner:npg_3fiOSWe4Agnm@ep-misty-recipe-aiocal8o-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require"
 }
 
 model User {
@@ -15,7 +15,7 @@ model User {
   email      String     @unique
   name       String
   password   String
-  role       String     @default("user") // user, premium, owner
+  role       String     @default("user")
   isPremium  Boolean    @default(false)
   premiumSince DateTime?
   createdAt  DateTime   @default(now())
@@ -44,12 +44,12 @@ model Session {
 model Question {
   id           String     @id @default(cuid())
   text         String
-  questionType String     @default("yesNo") // yesNo, multiple
+  questionType String     @default("yesNo")
   yesLabel     String     @default("Yes")
   noLabel      String     @default("No")
   yesCount     Int        @default(0)
   noCount      Int        @default(0)
-  status       String     @default("active") // draft, scheduled, active, ended
+  status       String     @default("active")
   category     String     @default("other")
   startDate    DateTime?
   endDate      DateTime?
@@ -106,7 +106,7 @@ model Comment {
 }
 
 model SiteSetting {
-  key       String   @id
-  value     String
-  updatedAt DateTime @updatedAt
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
 }
